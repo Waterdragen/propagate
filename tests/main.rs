@@ -1,7 +1,7 @@
-use std::error::Error;
-use sugar_try::{bad, good, is_good, reject, reject_bad, reject_good, take, Bad, Good};
+use propagate::{bad, good, is_good, reject, reject_bad, reject_good, take, Bad, Good};
 
 #[derive(Debug, Good, PartialEq)]
+#[allow(dead_code)]
 enum MyEnum {
     #[good]
     Zero,
@@ -18,6 +18,7 @@ enum MyEnum {
 }
 
 #[derive(Debug, Good, Bad)]
+#[allow(dead_code)]
 enum MySwitch {
     #[good]
     High,
@@ -26,6 +27,7 @@ enum MySwitch {
 }
 
 #[derive(Debug, Good, Bad, PartialEq)]
+#[allow(dead_code)]
 enum LogData {
     #[good] SuccessMsg(String),
             InfoMsg(String),
@@ -53,6 +55,7 @@ fn reset_error_code_on_error(log_data: &mut LogData) {
     *error_code = 0;
 }
 
+#[allow(unused_variables)]
 fn main() {
     let log_data = LogData::SuccessMsg("This is a success message".to_owned());
     let log_data = append_party_emoji_on_success(log_data);
@@ -167,6 +170,9 @@ fn main() {
     let option_ref_t = Some(&8);
     let a: &i32 = good!(ref_option_t; ());
     let b: &i32 = good!(&option_ref_t;);
+    let option_t = Some(9);
+    let default = 0;
+    let c: i32 = good!(option_t; default);
 
     #[allow(clippy::never_loop)]
     let _never = loop {

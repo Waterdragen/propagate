@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use sugar_try::{Good, good, take};
+    use propagate::{Good, good, take};
     use anyhow::{anyhow, bail, Result};
 
     #[derive(Debug, Good)]

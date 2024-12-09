@@ -1,5 +1,5 @@
 [package]
-name = "sugar-try"
+name = "propagate"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,8 +8,4 @@ anyhow = "1.0.93"
 
 [dependencies]
 anyhow = "1.0.93"
-sugar-try-macros = {version = "0.1.0", path = "proc_macros" }
-
-[[bin]]
-path = "tests/main.rs"
-name = "main"
+propagate-macros = {version = "0.1.0", path = "proc_macros" }

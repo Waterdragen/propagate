@@ -86,7 +86,7 @@ pub fn derive_good(input: TokenStream) -> TokenStream {
         .collect();
     let index_map: Vec<TokenStream2> = get_index_map(&ident, &variants);
     let good_index_impl = quote! {
-        impl ::sugar_try::__private::__GoodIndex for #ident {
+        impl ::propagate::__private::__GoodIndex for #ident {
             fn __good_indexes(&self) -> &'static [u8] {
                 &[#(#good_indexes),*]
             }
@@ -184,7 +184,7 @@ pub fn derive_bad(input: TokenStream) -> TokenStream {
         .collect();
     let index_map: Vec<TokenStream2> = get_index_map(&ident, &variants);
     let bad_index_impl = quote! {
-        impl <'a> ::sugar_try::__private::__BadIndex for #ident {
+        impl <'a> ::propagate::__private::__BadIndex for #ident {
             fn __bad_indexes(&self) -> &'static [u8] {
                 &[#(#bad_indexes),*]
             }
