@@ -10,6 +10,9 @@ macro_rules! __propagate {
     (else $($tt:tt)*) => {
         $($tt)*
     };
+    (default) => {
+        Default::default()
+    };
     ($($tt:tt)*) => {{
         return $($tt)*;
     }};
@@ -18,25 +21,10 @@ macro_rules! __propagate {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __propagate_closure {
-    // Run closure then continue
-    ($arg:expr => do $closure:expr; continue $($tt:tt)*) => {{
-        $closure($arg);
-        continue $($tt)*
-    }};
-    // Run closure then break
-    ($arg:expr => do $closure:expr; break $($tt:tt)*) => {{
-        $closure($arg);
-        break $($tt)*
-    }};
-    // Run closure then evaluate default value
-    ($arg:expr => do $closure:expr; else $($tt:tt)*) => {{
-        $closure($arg);
-        $($tt)*
-    }};
-    // Run closure then return
+    // Run closure then propagate
     ($arg:expr => do $closure:expr; $($tt:tt)*) => {{
         $closure($arg);
-        return $($tt)*
+        $crate::__propagate!($($tt)*)
     }};
 
     // Catch a common mistake
@@ -62,9 +50,37 @@ macro_rules! __propagate_closure {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __break_with_value {
     ($arg:expr; $label:lifetime $closure:expr) => { break $label ($closure)($arg) };
     ($arg:expr; $closure:expr) => { break ($closure)($arg) };
     ($($tt:tt)*) => { compile_error!("Invalid break statement") };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __take {
+    ($keep_variant:ident, $dump_variant:ident, $expr:expr) => {
+        match $expr {
+            $keep_variant(v) => v,
+            $dump_variant(enum_) => return enum_,
+        }
+    };
+    ($keep_variant:ident, $dump_variant:ident, $expr:expr; $($propagate:tt)*) => {
+        match $expr {
+            $keep_variant(v) => v,
+            #[allow(unreachable_code)]
+            #[allow(clippy::diverging_sub_expression)]
+            $dump_variant(_) => $crate::__propagate!($($propagate)*),
+        }
+    };
+    ($keep_variant:ident, $dump_variant:ident, $expr:expr => $($propagate_closure:tt)*) => {
+        match $expr {
+            $keep_variant(v) => v,
+            #[allow(unreachable_code)]
+            #[allow(clippy::diverging_sub_expression)]
+            $dump_variant(enum_) => $crate::__propagate_closure!(enum_ => $($propagate_closure)*),
+        }
+    };
 }

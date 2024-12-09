@@ -1,9 +1,7 @@
-use crate::Good;
-
 #[macro_export]
 macro_rules! reject_good {
     ($enum_:expr) => {
-        match Good::good($enum_) {
+        match $crate::Good::good($enum_) {
             Ok(v) => return v,
             Err(enum_) => enum_,
         }
@@ -17,7 +15,7 @@ macro_rules! reject_good {
         }
     };
     ($enum_:expr => $($propagate_closure:tt)*) => {
-        match Good::good($enum_) {
+        match $crate::Good::good($enum_) {
             #[allow(unreachable_code)]
             #[allow(clippy::diverging_sub_expression)]
             Ok(v) => $crate::__propagate_closure!(v => $($propagate_closure)*),

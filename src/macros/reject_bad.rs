@@ -1,9 +1,7 @@
-use crate::Bad;
-
 #[macro_export]
 macro_rules! reject_bad {
     ($enum_:expr) => {
-        match Bad::bad($enum_) {
+        match $crate::Bad::bad($enum_) {
             Ok(v) => return v,
             Err(enum_) => enum_,
         }
@@ -17,7 +15,7 @@ macro_rules! reject_bad {
         }
     };
     ($enum_:expr => $($propagate_closure:tt)*) => {
-        match Bad::bad($enum_) {
+        match $crate::Bad::bad($enum_) {
             #[allow(unreachable_code)]
             #[allow(clippy::diverging_sub_expression)]
             Err(v) => $crate::__propagate_closure!(v => $($propagate_closure)*),
