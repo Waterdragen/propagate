@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 #[inline]
 fn mod_8(index: usize) -> usize {
     index & 0x7
