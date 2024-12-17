@@ -75,12 +75,16 @@ macro_rules! __take {
             $dump_variant(_) => $crate::__propagate!($($propagate)*),
         }
     };
+    // Catch a common mistake
+    ($keep_variant:ident, $dump_variant:ident, $expr:expr => full $($propagate_closure:tt)*) => {
+        compile_error!("`full` can be omitted here because `take!` should be used on non-`TwoStates` enums, we can never infer the other inner value")
+    };
     ($keep_variant:ident, $dump_variant:ident, $expr:expr => $($propagate_closure:tt)*) => {
         match $expr {
             $keep_variant(v) => v,
             #[allow(unreachable_code)]
             #[allow(clippy::diverging_sub_expression)]
-            $dump_variant(enum_) => $crate::__propagate_closure!(enum_ => $($propagate_closure)*),
+            $dump_variant(__enum) => $crate::__propagate_closure!(__enum => $($propagate_closure)*),
         }
     };
 }
