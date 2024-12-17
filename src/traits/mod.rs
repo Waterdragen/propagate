@@ -1,10 +1,9 @@
 mod good;
 mod bad;
-mod no_neutral_variants;
+mod exactly_two_distinct_variants;
 mod two_states;
-mod homogeneous;
 
-pub use good::Good;
-pub use bad::Bad;
-pub use no_neutral_variants::NoNeutralVariants;
+pub use good::{Good, FromGood};
+pub use bad::{Bad, FromBad};
+pub use exactly_two_distinct_variants::ExactlyTwoDistinctVariants;
 pub use two_states::TwoStates;
