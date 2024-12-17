@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use propagate::{Good, good, take};
+    use propagate::{Propagate, good, take};
     use anyhow::{anyhow, bail, Result};
 
-    #[derive(Debug, Good)]
+    #[derive(Debug, Propagate)]
+    #[allow(dead_code)]
     enum MyEnum {
         Zero,
         One(i32),
@@ -13,7 +14,7 @@ mod tests {
     }
     fn test_anyhow_inner() -> Result<()> {
         let my_enum = MyEnum::Two(0, 1);
-        let two: (i32, i32) = good!(my_enum => |v| bail!("Cannot get good value! The value is {:?}", v));
+        let two: (i32, i32) = good!(my_enum => full |v| bail!("Cannot get good value! The value is {:?}", v));
         assert_eq!(two, (0, 1));
         let my_enum = MyEnum::Three(0, 0, 0);
         let _: (i32, i32) = take!(my_enum, MyEnum::Two[a, b]; bail!("Cannot get two!"));

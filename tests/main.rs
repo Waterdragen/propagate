@@ -1,6 +1,6 @@
-use propagate::{bad, good, is_good, reject, reject_bad, reject_good, take, Bad, Good};
+use propagate::{bad, good, is_good, reject, reject_good, take, Propagate};
 
-#[derive(Debug, Good, PartialEq)]
+#[derive(Debug, PartialEq, Propagate)]
 #[allow(dead_code)]
 enum MyEnum {
     #[good]
@@ -17,7 +17,7 @@ enum MyEnum {
     },
 }
 
-#[derive(Debug, Good, Bad)]
+#[derive(Debug, Propagate)]
 #[allow(dead_code)]
 enum MySwitch {
     #[good]
@@ -26,7 +26,7 @@ enum MySwitch {
     Low,
 }
 
-#[derive(Debug, Good, Bad, PartialEq)]
+#[derive(Debug, Propagate, PartialEq)]
 #[allow(dead_code)]
 enum LogData {
     #[good] SuccessMsg(String),
@@ -44,7 +44,7 @@ fn append_party_emoji_on_success(log_data: LogData) -> LogData {
 }
 
 fn get_success_msg_len_or_format_str(log_data: &LogData) -> Result<usize, String> {
-    let success_msg = good!(log_data => |data| Err(format!("{:?}", data)));
+    let success_msg = good!(log_data => full |data| Err(format!("{:?}", data)));
     Ok(success_msg.len())
 }
 
@@ -117,7 +117,7 @@ fn main() {
     let mut new_vec: Vec<i32> = Vec::new();
     let mut err_item: Option<&Result<i32, &str>> = None;
     for item in items.iter() {
-        let num = good!(item => do |item| {err_item = Some(item)}; continue);
+        let num = good!(item => full do |item| {err_item = Some(item)}; continue);
         new_vec.push(*num);
     }
     assert_eq!(new_vec, [1, 2, 4, 5]);
@@ -126,7 +126,7 @@ fn main() {
     new_vec.clear();
     err_item = None;
     for item in items.iter() {
-        let num = good!(item => do |item| {err_item = Some(item)}; break);
+        let num = good!(item => full do |item| {err_item = Some(item)}; break);
         new_vec.push(*num);
     }
     assert_eq!(new_vec, [1, 2]);
@@ -135,7 +135,7 @@ fn main() {
     let mut good_value: Option<i32> = None;
     let got_a_good_value = 'a: loop {
         let i: Result<i32, &str> = Err("an error");
-        let inner_value = good!(i => break 'a |v: Result<i32, &str>| v.is_ok());
+        let inner_value = good!(i => full break 'a |v: Result<i32, &str>| v.is_ok());
         good_value = Some(inner_value);
     };
     assert!(!got_a_good_value);
