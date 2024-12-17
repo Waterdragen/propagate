@@ -50,7 +50,7 @@ macro_rules! impl_index {
     };
 }
 
-use core::ops::ControlFlow::{self, Continue, Break};
+use core::ops::ControlFlow::{self, Break, Continue};
 
 impl_index!(Result[T, E], Ok, Err, is_ok, is_err);
 impl_index!(Option[T], Some, None, is_some, is_none);

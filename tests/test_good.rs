@@ -1,4 +1,4 @@
-use propagate::{Propagate, good};
+use propagate::{good, Propagate};
 mod util;
 use core::ops::ControlFlow::{self, Break, Continue};
 
@@ -105,12 +105,19 @@ fn good_value_or_break() {
 #[test]
 fn good_value_or_apply_closure_not_two_states() {
     let my_enum = MyEnum::Zero;
-    assert_unwrap_eq!(good!(my_enum => full break |enum_| matches!(enum_, MyEnum::One{..})), ());
+    assert_unwrap_eq!(
+        good!(my_enum => full break |enum_| matches!(enum_, MyEnum::One{..})),
+        ()
+    );
     let my_enum = MyEnum::One(1);
-    assert_break_eq!(good!(my_enum => full break |enum_| matches!(enum_, MyEnum::One{..})), (i32, i32), true);
+    assert_break_eq!(
+        good!(my_enum => full break |enum_| matches!(enum_, MyEnum::One{..})),
+        (i32, i32),
+        true
+    );
 
     let mut flag = false;
-    let my_enum = MyEnum::Named {id: 0};
+    let my_enum = MyEnum::Named { id: 0 };
     assert_short_circuit_eq!(good!(my_enum => full do |_| {flag = true;}; 4), i32, 4);
     assert!(flag);
 }
@@ -127,5 +134,8 @@ fn good_value_or_apply_closure_two_states() {
     assert_short_circuit_eq!(good!(res => |err: &str| err.chars().next().unwrap()), 'e');
 
     let res: Result<i32, &str> = Err("error");
-    assert_break_eq!(good!(res => break |err: &str| err[..3].to_owned()), "err".to_owned());
+    assert_break_eq!(
+        good!(res => break |err: &str| err[..3].to_owned()),
+        "err".to_owned()
+    );
 }

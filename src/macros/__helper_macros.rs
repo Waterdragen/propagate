@@ -53,9 +53,15 @@ macro_rules! __propagate_closure {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __break_with_value {
-    ($arg:expr; $label:lifetime $closure:expr) => { break $label ($closure)($arg) };
-    ($arg:expr; $closure:expr) => { break ($closure)($arg) };
-    ($($tt:tt)*) => { compile_error!("Invalid break statement") };
+    ($arg:expr; $label:lifetime $closure:expr) => {
+        break $label($closure)($arg)
+    };
+    ($arg:expr; $closure:expr) => {
+        break ($closure)($arg)
+    };
+    ($($tt:tt)*) => {
+        compile_error!("Invalid break statement")
+    };
 }
 
 #[doc(hidden)]

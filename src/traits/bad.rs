@@ -1,4 +1,4 @@
-pub trait Bad<T>: Sized{
+pub trait Bad<T>: Sized {
     fn bad(self) -> Result<Self, T>;
 }
 pub trait FromBad<T>: Sized {
@@ -58,7 +58,9 @@ impl<T> Bad<()> for Option<T> {
 
 impl<T> FromBad<()> for Option<T> {
     #[inline]
-    fn from_bad(_: ()) -> Self { None }
+    fn from_bad(_: ()) -> Self {
+        None
+    }
 }
 
 macro_rules! impl_from_bad_self {

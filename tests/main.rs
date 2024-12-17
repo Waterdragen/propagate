@@ -29,11 +29,14 @@ enum MySwitch {
 #[derive(Debug, Propagate, PartialEq)]
 #[allow(dead_code)]
 enum LogData {
-    #[good] SuccessMsg(String),
-            InfoMsg(String),
-            DebugMsg(String),
-    #[bad]  ErrorCode(u32),
-    #[bad]  ErrorMsg(String),
+    #[good]
+    SuccessMsg(String),
+    InfoMsg(String),
+    DebugMsg(String),
+    #[bad]
+    ErrorCode(u32),
+    #[bad]
+    ErrorMsg(String),
 }
 
 fn append_party_emoji_on_success(log_data: LogData) -> LogData {
@@ -49,9 +52,9 @@ fn get_success_msg_len_or_format_str(log_data: &LogData) -> Result<usize, String
 }
 
 fn reset_error_code_on_error(log_data: &mut LogData) {
-    let error_code: &mut u32 = bad!(log_data;);  // Must annotate type here
-    // let error_code = bad!(&mut log_data; ());
-    // ^^^^ FAIL: Cannot infer type because we have two #[bad] variants!
+    let error_code: &mut u32 = bad!(log_data;); // Must annotate type here
+                                                // let error_code = bad!(&mut log_data; ());
+                                                // ^^^^ FAIL: Cannot infer type because we have two #[bad] variants!
     *error_code = 0;
 }
 
@@ -143,7 +146,7 @@ fn main() {
 
     println!("Reachable code");
 
-    use anyhow::{bail};
+    use anyhow::bail;
     fn test_anyhow_inner() -> anyhow::Result<()> {
         let my_enum = MyEnum::Two(0, 1);
         let two: (i32, i32) = good!(my_enum; bail!("Cannot get good value!"));
