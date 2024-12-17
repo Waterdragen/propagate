@@ -6,6 +6,9 @@ edition = "2021"
 [dev-dependencies]
 anyhow = "1.0.93"
 
+[features]
+enum_index = []
+
 [dependencies]
 anyhow = "1.0.93"
 propagate-macros = {version = "0.1.0", path = "proc_macros" }
