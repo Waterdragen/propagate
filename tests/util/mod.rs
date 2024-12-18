@@ -1,8 +1,11 @@
+#[cfg(not(panic = "unwind"))]
 #[macro_export]
 macro_rules! _must_unwrap {
     ($mac_call:expr) => {{
         let mut value: Option<_> = None;
         let mut early_return = true;
+        #[allow(unreachable_code)]
+        #[allow(clippy::diverging_sub_expression)]
         let _ = (|| {
             let mut counter = 0;
             let _ = loop {
@@ -15,7 +18,6 @@ macro_rules! _must_unwrap {
                 #[allow(invalid_value)]
                 return unsafe { ::core::mem::MaybeUninit::<_>::uninit().assume_init() };
             };
-            #[allow(unreachable_code)]
             unreachable!("Macro reached break statement");
         })();
         assert!(!early_return, "Macro reached return statement");
@@ -23,18 +25,63 @@ macro_rules! _must_unwrap {
     }};
 }
 
+#[cfg(panic = "unwind")]
+#[macro_export]
+macro_rules! _must_unwrap {
+    ($mac_call:expr) => {{
+        use core::ops::ControlFlow::{self, Break, Continue};
+        use std::sync::Mutex;
+        let control: Mutex<Option<ControlFlow<()>>> = Mutex::new(None);
+        let value: Mutex<Option<_>> = Mutex::new(None);
+        #[allow(unreachable_code)]
+        #[allow(clippy::diverging_sub_expression)]
+        let res = std::panic::catch_unwind(|| {
+            let _ = (|| {
+                let mut counter = 0;
+                let _ = loop {
+                    counter += 1;
+                    if counter > 1 {
+                        let mut control_guard = control.lock().unwrap();
+                        *control_guard = Some(Continue(()));
+                        drop(control_guard);
+                        panic!();
+                    }
+                    let mut value_guard = value.lock().unwrap();
+                    *value_guard = Some($mac_call);
+                    drop(value_guard);
+                    return panic!();
+                };
+                {
+                    let mut control_guard = control.lock().unwrap();
+                    *control_guard = Some(Break(()));
+                    drop(control_guard);
+                    panic!();
+                }
+            })();
+        });
+        assert!(res.is_err(), "Macro reached return statement");
+        match control.into_inner().unwrap() {
+            Some(Continue(_)) => panic!("Macro reached continue statement"),
+            Some(Break(_)) => panic!("Macro reached break statement"),
+            None => {}
+        }
+        value.into_inner().unwrap()
+    }};
+}
+
 #[macro_export]
 macro_rules! _must_break {
     ($mac_call:expr, $ty:ty) => {{
         let mut counter = 0;
+        #[allow(unreachable_code)]
+        #[allow(clippy::diverging_sub_expression)]
         let break_value = loop {
             counter += 1;
             if counter > 1 {
                 unreachable!("Macro reached continue statement");
             }
             let _: $ty = $mac_call;
-            #[allow(unreachable_code)]
-            return unreachable!("Macro did not break or continue");
+            break unreachable!("Macro did not break or continue");
         };
         break_value
     }};
