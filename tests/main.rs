@@ -171,6 +171,7 @@ fn main() {
 
     let ref_option_t = &Some(8);
     let option_ref_t = Some(&8);
+    #[allow(clippy::unused_unit)]
     let a: &i32 = good!(ref_option_t; ());
     let b: &i32 = good!(&option_ref_t;);
     let option_t = Some(9);
@@ -178,6 +179,7 @@ fn main() {
     let c: i32 = good!(option_t; default);
 
     #[allow(clippy::never_loop)]
+    #[allow(clippy::let_unit_value)]
     let _never = loop {
         let res: Result<&str, &str> = Ok("always ok");
         bad!(res => |_| {println!("Before returning in loop");});
