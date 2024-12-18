@@ -1,8 +1,6 @@
-use crate::{Bad, ExactlyTwoDistinctVariants, FromBad, FromGood, Good};
+use crate::{Bad, ExactlyTwoDistinctVariants, Good};
 
-pub trait TwoStates<G, B>:
-    Good<G> + Bad<B> + FromGood<G> + FromBad<B> + ExactlyTwoDistinctVariants
-{
+pub trait TwoStates<G, B>: Good<G> + Bad<B> + ExactlyTwoDistinctVariants {
     #[inline]
     fn two_states(self) -> Result<G, B> {
         match self.good() {
@@ -15,10 +13,7 @@ pub trait TwoStates<G, B>:
     }
 }
 
-impl<T, G, B> TwoStates<G, B> for T where
-    T: Good<G> + Bad<B> + FromGood<G> + FromBad<B> + ExactlyTwoDistinctVariants
-{
-}
+impl<T, G, B> TwoStates<G, B> for T where T: Good<G> + Bad<B> + ExactlyTwoDistinctVariants {}
 
 #[cold]
 #[track_caller]
