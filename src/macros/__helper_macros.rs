@@ -41,6 +41,10 @@ macro_rules! __propagate_closure {
     ($arg:expr => else $closure:expr) => {
         ($closure)($arg)
     };
+    // Syntactic sugar for transparent closure
+    ($arg:expr => _) => {
+        return $arg
+    };
     // Return value, applying closure
     ($arg:expr => $closure:expr) => {
         return ($closure)($arg)
