@@ -126,6 +126,7 @@ fn good_value_or_apply_closure_not_two_states() {
 fn good_value_or_apply_closure_two_states() {
     let res: Result<i32, &str> = Err("error");
     assert_short_circuit_eq!(good!(res => |err| err), "error");
+    assert_short_circuit_eq!(good!(res => _), "error");
 
     let res: Result<i32, &str> = Err("12");
     assert_unwrap_eq!(good!(res => else |err: &str| err.parse().unwrap()), 12);
