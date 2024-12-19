@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use alloc::string::{String, ToString};
 use hashbrown::{HashMap, HashSet};
-use proc_macro2::{Ident, Literal, Span, TokenStream};
+use proc_macro2::{Ident, Literal, Span, TokenStream, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Field, Fields, Type, Variant};
 
@@ -102,4 +102,8 @@ pub fn validate_grouped_variants<'a, I>(variants: I) -> Result<(), (Vec<&'a Type
         }
     }
     Ok(())
+}
+
+pub fn get_result_type(field_type: &TokenStream2, is_good: bool) -> TokenStream2 {
+    if is_good { quote! {Result<#field_type, Self>} } else { quote! {Result<Self, #field_type>} }
 }

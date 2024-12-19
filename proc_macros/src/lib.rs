@@ -229,7 +229,3 @@ pub fn derive_propagate(input: TokenStream) -> TokenStream {
     };
     output.into()
 }
-
-fn get_result_type(field_type: &TokenStream2, is_good: bool) -> TokenStream2 {
-    if is_good { quote! {Result<#field_type, Self>} } else { quote! {Result<Self, #field_type>} }
-}
