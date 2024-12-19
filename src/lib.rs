@@ -6,7 +6,7 @@ mod macros;
 #[doc(hidden)]
 pub mod __private;
 
-pub use propagate_macros::*;
+pub use propagate_derive::*;
 pub use traits::*;
 
 #[cfg(feature = "enum_index")]

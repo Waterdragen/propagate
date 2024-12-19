@@ -11,4 +11,4 @@ enum_index = []
 
 [dependencies]
 anyhow = "1.0.93"
-propagate-macros = {version = "0.1.0", path = "proc_macros" }
+propagate-derive = {version = "0.1.0", path = "./proc_macros" }
