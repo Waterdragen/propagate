@@ -1,0 +1,7 @@
+error: `Propagate` can only be derived for enums
+ --> tests/fail_compile/derive_struct.rs:3:10
+  |
+3 | #[derive(Propagate)]
+  |          ^^^^^^^^^
+  |
+  = note: this error originates in the derive macro `Propagate` (in Nightly builds, run with -Z macro-backtrace for more info)
