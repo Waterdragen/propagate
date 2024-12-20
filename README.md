@@ -130,7 +130,7 @@ let b: Vec<i32> = take!(a, Result::Ok[v];);
     ```
 
 4. **Custom Types**:
-    - Any type that implements the `Good` or `Bad` trait can propagate using the `good!` or `bad!` macro, including `Result`, `Option`, `ControlFlow`, bool, and primitive integers. You can derive `Good` or `Bad` and mark the variants with `#[good]` or `#[bad]`. To use `?` on a custom enum, the unstable trait `Try` has to be implemented, but `Try` is not generic, meaning it cannot be overloaded for the same enum. You can, however, overload `#[good]` and `#[bad]`.
+    - Any type that implements the `Good` or `Bad` trait can propagate using the `good!` or `bad!` macro, including `Result`, `Option`, and `ControlFlow`. You can derive `Good` or `Bad` and mark the variants with `#[good]` or `#[bad]`. To use `?` on a custom enum, the unstable trait `Try` has to be implemented, but `Try` is not generic, meaning it cannot be overloaded for the same enum. You can, however, overload `#[good]` and `#[bad]`.
 
     ```rust
     #[derive(Good, Bad)]

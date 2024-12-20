@@ -62,29 +62,3 @@ impl<T> FromBad<()> for Option<T> {
         None
     }
 }
-
-macro_rules! impl_from_bad_self {
-    ($($ty:ty )*) => {
-        $(impl FromBad<Self> for $ty {
-            #[inline]
-            fn from_bad(bad: Self) -> Self {
-                bad
-            }
-        })*
-    };
-}
-impl_from_bad_self!(bool u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
-
-macro_rules! impl_bad_self {
-    ($($ty:ty )*; $self:ident == $value:expr) => {
-        $(impl Bad<Self> for $ty {
-            #[inline]
-            fn bad(self) -> Result<Self, Self> {
-                if self == $value { Err(self) } else { Ok(self) }
-            }
-        })*
-    };
-}
-
-impl_bad_self!(bool; self == false);
-impl_bad_self!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize; self == 0);

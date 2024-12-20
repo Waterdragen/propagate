@@ -46,27 +46,3 @@ use core::ops::ControlFlow;
 impl_good!(<T, E> T Result Ok);
 impl_good!(<T> T Option Some);
 impl_good!(<B, C> C ControlFlow ControlFlow::Continue);
-
-macro_rules! impl_good_self {
-    ($($ty:ty )*; $self:ident != $value:expr) => {
-        $(impl Good<Self> for $ty {
-            #[inline]
-            fn good(self) -> Result<Self, Self> {
-                if self != $value { Ok(self) } else { Err(self) }
-            }
-        })*
-    };
-}
-
-impl_good_self!(bool; self != false);
-impl_good_self!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize; self != 0);
-
-macro_rules! impl_from_good_self {
-    ($($ty:ty )*) => {
-        $(impl FromGood<Self> for $ty {
-            #[inline]
-            fn from_good(good: Self) -> Self { good }
-        })*
-    };
-}
-impl_from_good_self!(bool u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);

@@ -30,14 +30,3 @@ unsafe impl<'a, T> ExactlyTwoDistinctVariants for &'a mut Option<T> {}
 unsafe impl<B, C> ExactlyTwoDistinctVariants for ControlFlow<B, C> {}
 unsafe impl<'a, B, C> ExactlyTwoDistinctVariants for &'a ControlFlow<B, C> {}
 unsafe impl<'a, B, C> ExactlyTwoDistinctVariants for &'a mut ControlFlow<B, C> {}
-
-macro_rules! impl_exactly_two_variants {
-    ($($ty:ty)*) => {
-        $(unsafe impl ExactlyTwoDistinctVariants for $ty {})*
-    };
-}
-
-// SAFETY: `bool` implements `Good` and `Bad`, and has exactly 2 variants
-// SAFETY: primitive integers implement `Good` and `Bad`, which corresponds to
-// non-zero and zero respectively, are mutually exclusive and collectively exhaustive
-impl_exactly_two_variants!(bool u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
