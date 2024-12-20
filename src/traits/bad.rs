@@ -4,6 +4,9 @@ pub trait Bad<T>: Sized {
 pub trait FromBad<T>: Sized {
     fn from_bad(bad: T) -> Self;
 }
+pub trait IntoBad<T> {
+    fn into_bad(self) -> T;
+}
 
 macro_rules! bad_body {
     ($generic:ident, $variant:path $(, $($borrow:tt)*)?) => {
@@ -60,5 +63,11 @@ impl<T> FromBad<()> for Option<T> {
     #[inline]
     fn from_bad(_: ()) -> Self {
         None
+    }
+}
+
+impl<T, U> IntoBad<U> for T where U: FromBad<T> {
+    fn into_bad(self) -> U {
+        U::from_bad(self)
     }
 }

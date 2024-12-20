@@ -4,6 +4,9 @@ pub trait Good<T>: Sized {
 pub trait FromGood<T>: Sized {
     fn from_good(good: T) -> Self;
 }
+pub trait IntoGood<T> {
+    fn into_good(self) -> T;
+}
 
 macro_rules! good_body {
     ($generic:ident, $variant:path $(, $($borrow:tt)*)?) => {
@@ -46,3 +49,9 @@ use core::ops::ControlFlow;
 impl_good!(<T, E> T Result Ok);
 impl_good!(<T> T Option Some);
 impl_good!(<B, C> C ControlFlow ControlFlow::Continue);
+
+impl<T, U> IntoGood<U> for T where U: FromGood<T> {
+    fn into_good(self) -> U {
+        U::from_good(self)
+    }
+}
