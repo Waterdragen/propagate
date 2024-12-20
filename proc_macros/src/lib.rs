@@ -1,37 +1,53 @@
 #![no_std]
 
-mod helper_fn;
 mod bool_packing;
+mod helper_fn;
 
 extern crate alloc;
 
-use proc_macro::TokenStream;
-use proc_macro2::{Literal, TokenStream as TokenStream2};
+use alloc::format;
+use alloc::string::ToString;
 use alloc::vec::Vec;
-use hashbrown::HashSet;
-use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Field, Fields, Generics, Type, Variant};
+use proc_macro::TokenStream;
+use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
+use quote::{quote, ToTokens};
+use syn::{parse_macro_input, Data, DeriveInput, Error, Fields, Generics, Token, Type, Variant};
 
 use helper_fn::*;
+use syn::punctuated::Punctuated;
 
 #[proc_macro_derive(Propagate, attributes(good, bad))]
 pub fn derive_propagate(input: TokenStream) -> TokenStream {
     let trait_path = quote! {::propagate::};
 
-    let DeriveInput { data, ident, generics, .. } = parse_macro_input!(input);
+    let DeriveInput {
+        data,
+        ident,
+        generics,
+        ..
+    } = parse_macro_input!(input);
 
     let variants: Vec<Variant> = if let Data::Enum(data) = data {
         data.variants.into_iter().collect()
     } else {
-        panic!("`Propagate` procedural macro (for `Good` or `Bad` traits) can only be derived for enums");
+        return quote! { compile_error!("`Propagate` can only be derived for enums"); }.into();
     };
+
+    if variants.is_empty() {
+        return quote! { compile_error!("`Propagate` cannot be derived for enums without fields"); }.into()
+    }
+
     let Generics {
         params,
         where_clause,
         lt_token,
         gt_token,
     } = generics;
-    let trailing_comma = if params.is_empty() { quote! {} } else { quote! {,} };
+    let trailing_comma = if params.is_empty() {
+        quote! {}
+    } else {
+        quote! {,}
+    };
 
     let good_variants: Vec<&Variant> = variants
         .iter()
@@ -45,41 +61,40 @@ pub fn derive_propagate(input: TokenStream) -> TokenStream {
         .collect();
 
     if good_variants.is_empty() && bad_variants.is_empty() {
-        panic!("Enum must contain at least one `#[good]` or `#[bad]` attribute. \
-                Did you forget to mark a good or bad variant?");
+        return quote! {
+            compile_error!(
+            "Enum must contain at least one `#[good]` or `#[bad]` attribute. \
+                Did you forget to mark a good or bad variant?"
+            );
+        }.into();
     }
 
     let grouped_good_variants = group_variant_ref_by_type(&good_variants);
     let grouped_bad_variants = group_variant_ref_by_type(&bad_variants);
 
-    let grouped_good_variants_iter = grouped_good_variants.iter()
+    let grouped_good_variants_iter = grouped_good_variants
+        .iter()
         .map(|(fields, variants)| (true, fields, variants));
-    let grouped_bad_variants_iter = grouped_bad_variants.iter()
+    let grouped_bad_variants_iter = grouped_bad_variants
+        .iter()
         .map(|(fields, variants)| (false, fields, variants));
 
     let grouped_variants_iter = grouped_good_variants_iter.chain(grouped_bad_variants_iter);
 
-    match (validate_grouped_variants(grouped_good_variants.keys()), validate_grouped_variants(grouped_bad_variants.keys())) {
-        (Ok(_), Ok(_)) => {},
-        (_, Err((a, b))) | (Err((a, b)), _) => {
-            panic!("Types `{a:?}` and `{b:?}` are ambiguous. Cannot infer types for both tuple and n-args variants.");
-        }
-    }
+    match (
+        validate_grouped_variants(grouped_good_variants.keys()),
+        validate_grouped_variants(grouped_bad_variants.keys()),
+    ) {
+        (Ok(_), Ok(_)) => {}
+        (_, Err(types)) | (Err(types), _) => {
+            let p: Punctuated<&Type, Token![,]> = Punctuated::from_iter(types.into_iter());
+            let types = p.to_token_stream().to_string();
+            let msg = format!(
+                "Types `({types})` and `{types}` are ambiguous. \
+                Cannot infer types for both tuple and n-args variants.\n");
 
-    let mut tuple_like_type_set = HashSet::new();
-    for fields in grouped_good_variants.keys() {
-        let fields = if let Fields::Unnamed(fields) = fields {fields} else {continue};
-        let fields: Vec<&Field> = fields.unnamed.iter().collect();
-        let types: Vec<&Type>;
-        if fields.len() == 1 {
-            let tuple_ty = if let Type::Tuple(tuple_ty) = &fields[0].ty {tuple_ty} else {continue};
-            types = tuple_ty.elems.iter().collect::<Vec<_>>();
-        } else {
-            types = fields.iter().map(|field| &field.ty).collect::<Vec<_>>();
-        }
-        match tuple_like_type_set.get(&types) {
-            None => { tuple_like_type_set.insert(types); },
-            Some(types) => panic!("Types `{types:?}` and `{:?}` are ambiguous. Cannot infer types for both tuple and n-args variants.", types),
+            let error = Error::new(Span::call_site(), msg);
+            return error.into_compile_error().into();
         }
     }
 
@@ -153,7 +168,7 @@ pub fn derive_propagate(input: TokenStream) -> TokenStream {
     let good_packed = bool_packing::pack_bool(good_attribute_iter);
     let good_packed_lit: Vec<Literal> = good_packed
         .iter()
-        .map(|num| { Literal::u8_unsuffixed(*num) })
+        .map(|num| Literal::u8_unsuffixed(*num))
         .collect();
     let good_index_impl = quote! {
         impl #generic #trait_path __private::__GoodIndex for #ident #generic #where_clause {
@@ -167,7 +182,7 @@ pub fn derive_propagate(input: TokenStream) -> TokenStream {
     let bad_packed = bool_packing::pack_bool(bad_attribute_iter);
     let bad_packed_lit: Vec<Literal> = bad_packed
         .iter()
-        .map(|num| { Literal::u8_unsuffixed(*num) })
+        .map(|num| Literal::u8_unsuffixed(*num))
         .collect();
     let bad_index_impl = quote! {
         impl #generic #trait_path __private::__BadIndex for #ident #generic #where_clause {
@@ -209,11 +224,13 @@ pub fn derive_propagate(input: TokenStream) -> TokenStream {
         }
     });
 
-    let two_states_impl: Option<_> =
-        if grouped_good_variants.len() == 1 && grouped_bad_variants.len() == 1 &&
-            variants.len() == 2 && &good_packed != &bad_packed {
+    let two_states_impl: Option<_> = if grouped_good_variants.len() == 1
+        && grouped_bad_variants.len() == 1
+        && variants.len() == 2
+        && &good_packed != &bad_packed
+    {
         Some(
-            quote! {unsafe impl #generic #trait_path ExactlyTwoDistinctVariants for #ident #generic #where_clause {}}
+            quote! {unsafe impl #generic #trait_path ExactlyTwoDistinctVariants for #ident #generic #where_clause {}},
         )
     } else {
         None

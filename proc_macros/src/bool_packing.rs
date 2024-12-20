@@ -10,7 +10,10 @@ fn push_bool(num: &mut u8, b: bool, bit_index: usize) {
     *num |= bit_mask;
 }
 
-pub fn pack_bool<Bools>(bools: Bools) -> Vec<u8> where Bools: Iterator<Item = bool> {
+pub fn pack_bool<Bools>(bools: Bools) -> Vec<u8>
+where
+    Bools: Iterator<Item = bool>,
+{
     let mut packed: Vec<u8> = Vec::new();
     bools.enumerate().for_each(|(index, b)| {
         let bit_index = mod_8(index);

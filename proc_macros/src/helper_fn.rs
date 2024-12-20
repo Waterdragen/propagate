@@ -1,5 +1,5 @@
-use alloc::vec::Vec;
 use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use hashbrown::{HashMap, HashSet};
 use proc_macro2::{Ident, Literal, Span, TokenStream, TokenStream as TokenStream2};
 use quote::quote;
@@ -33,11 +33,11 @@ pub fn get_tuple_field_type(fields: &Fields, borrow: &TokenStream) -> TokenStrea
         Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
             let ty = &fields.unnamed[0].ty;
             quote! { #borrow #ty }
-        },
+        }
         Fields::Unnamed(fields) => {
             let types = fields.unnamed.iter().map(|field| &field.ty);
             quote! { (#(#borrow #types),*) }
-        },
+        }
         Fields::Named(_) => unreachable!(),
     }
 }
@@ -45,9 +45,7 @@ pub fn get_tuple_field_type(fields: &Fields, borrow: &TokenStream) -> TokenStrea
 pub fn get_any_field_input_and_output(fields: &Fields) -> (TokenStream, TokenStream) {
     match fields {
         Fields::Unit => (quote! {}, quote! { () }),
-        Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
-            (quote! { (v) }, quote! { v })
-        },
+        Fields::Unnamed(fields) if fields.unnamed.len() == 1 => (quote! { (v) }, quote! { v }),
         Fields::Unnamed(fields) => {
             let len = fields.unnamed.len();
             let types = (0..len).map(|i| {
@@ -56,13 +54,15 @@ pub fn get_any_field_input_and_output(fields: &Fields) -> (TokenStream, TokenStr
             });
             let tuple = quote! { (#(#types),*) };
             (tuple.clone(), tuple)
-        },
+        }
         // For matching indexes only
         Fields::Named(_) => (quote! { {..} }, quote! { () }),
     }
 }
 
-pub fn group_variant_ref_by_type<'a>(variant: &'a [&Variant]) -> HashMap<&'a Fields, Vec<&'a Variant>> {
+pub fn group_variant_ref_by_type<'a>(
+    variant: &'a [&Variant],
+) -> HashMap<&'a Fields, Vec<&'a Variant>> {
     let mut grouped_variants: HashMap<&Fields, Vec<&Variant>> = HashMap::new();
     for variant in variant.iter() {
         let fields = &variant.fields;
@@ -83,27 +83,42 @@ pub fn get_index_matcher(enum_name: &Ident, variants: &[Variant]) -> Vec<TokenSt
         .collect()
 }
 
-pub fn validate_grouped_variants<'a, I>(variants: I) -> Result<(), (Vec<&'a Type>, Vec<&'a Type>)>
-    where I: Iterator<Item = &'a &'a Fields> {
+pub fn validate_grouped_variants<'a, I>(variants: I) -> Result<(), Vec<&'a Type>>
+where
+    I: Iterator<Item = &'a &'a Fields>,
+{
     let mut tuple_like_type_set = HashSet::new();
     for fields in variants {
-        let fields = if let Fields::Unnamed(fields) = fields {fields} else {continue};
+        let fields = if let Fields::Unnamed(fields) = fields {
+            fields
+        } else {
+            continue;
+        };
         let fields: Vec<&Field> = fields.unnamed.iter().collect();
         let types: Vec<&Type>;
         if fields.len() == 1 {
-            let tuple_ty = if let Type::Tuple(tuple_ty) = &fields[0].ty {tuple_ty} else {continue};
+            let tuple_ty = if let Type::Tuple(tuple_ty) = &fields[0].ty {
+                tuple_ty
+            } else {
+                continue;
+            };
             types = tuple_ty.elems.iter().collect::<Vec<_>>();
         } else {
             types = fields.iter().map(|field| &field.ty).collect::<Vec<_>>();
         }
-        match tuple_like_type_set.take(&types) {
-            None => { tuple_like_type_set.insert(types); },
-            Some(existing) => return Err((types, existing)),
+        if tuple_like_type_set.contains(&types) {
+            return Err(types);
+        } else {
+            tuple_like_type_set.insert(types);
         }
     }
     Ok(())
 }
 
 pub fn get_result_type(field_type: &TokenStream2, is_good: bool) -> TokenStream2 {
-    if is_good { quote! {Result<#field_type, Self>} } else { quote! {Result<Self, #field_type>} }
+    if is_good {
+        quote! {Result<#field_type, Self>}
+    } else {
+        quote! {Result<Self, #field_type>}
+    }
 }
