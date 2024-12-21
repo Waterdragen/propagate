@@ -1,31 +1,3 @@
-#[cfg(not(panic = "unwind"))]
-#[macro_export]
-macro_rules! _must_unwrap {
-    ($mac_call:expr) => {{
-        let mut value: Option<_> = None;
-        let mut early_return = true;
-        #[allow(unreachable_code)]
-        #[allow(clippy::diverging_sub_expression)]
-        let _ = (|| {
-            let mut counter = 0;
-            let _ = loop {
-                counter += 1;
-                if counter > 1 {
-                    unreachable!("Macro reached continue statement");
-                }
-                value = Some($mac_call);
-                early_return = false;
-                #[allow(invalid_value)]
-                return unsafe { ::core::mem::MaybeUninit::<_>::uninit().assume_init() };
-            };
-            unreachable!("Macro reached break statement");
-        })();
-        assert!(!early_return, "Macro reached return statement");
-        value
-    }};
-}
-
-#[cfg(panic = "unwind")]
 #[macro_export]
 macro_rules! _must_unwrap {
     ($mac_call:expr) => {{
@@ -47,10 +19,8 @@ macro_rules! _must_unwrap {
                     let _ = value.set($mac_call);
                     return panic!();
                 };
-                {
-                    let _ = control.set(Break(()));
-                    panic!();
-                }
+                let _ = control.set(Break(()));
+                panic!();
             })();
         });
         assert!(res.is_err(), "Macro reached return statement");
