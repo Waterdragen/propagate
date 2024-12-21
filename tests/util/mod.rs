@@ -30,9 +30,9 @@ macro_rules! _must_unwrap {
 macro_rules! _must_unwrap {
     ($mac_call:expr) => {{
         use core::ops::ControlFlow::{self, Break, Continue};
-        use std::sync::Mutex;
-        let control: Mutex<Option<ControlFlow<()>>> = Mutex::new(None);
-        let value: Mutex<Option<_>> = Mutex::new(None);
+        use std::sync::OnceLock;
+        let control: OnceLock<ControlFlow<()>> = OnceLock::new();
+        let value: OnceLock<_> = OnceLock::new();
         #[allow(unreachable_code)]
         #[allow(clippy::diverging_sub_expression)]
         let res = std::panic::catch_unwind(|| {
@@ -41,31 +41,25 @@ macro_rules! _must_unwrap {
                 let _ = loop {
                     counter += 1;
                     if counter > 1 {
-                        let mut control_guard = control.lock().unwrap();
-                        *control_guard = Some(Continue(()));
-                        drop(control_guard);
+                        let _ = control.set(Continue(()));
                         panic!();
                     }
-                    let mut value_guard = value.lock().unwrap();
-                    *value_guard = Some($mac_call);
-                    drop(value_guard);
+                    let _ = value.set($mac_call);
                     return panic!();
                 };
                 {
-                    let mut control_guard = control.lock().unwrap();
-                    *control_guard = Some(Break(()));
-                    drop(control_guard);
+                    let _ = control.set(Break(()));
                     panic!();
                 }
             })();
         });
         assert!(res.is_err(), "Macro reached return statement");
-        match control.into_inner().unwrap() {
+        match control.into_inner() {
             Some(Continue(_)) => panic!("Macro reached continue statement"),
             Some(Break(_)) => panic!("Macro reached break statement"),
             None => {}
         }
-        value.into_inner().unwrap()
+        value.into_inner()
     }};
 }
 
