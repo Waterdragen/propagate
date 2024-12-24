@@ -1,3 +1,6 @@
+/// Tries to get the inner value of the "bad" enum variant, or else propagate
+///
+///
 #[macro_export]
 macro_rules! bad {
     ($enum_:expr) => {

@@ -50,7 +50,20 @@ impl_good!(<T, E> T Result Ok);
 impl_good!(<T> T Option Some);
 impl_good!(<B, C> C ControlFlow ControlFlow::Continue);
 
-impl<T, U> IntoGood<U> for T where U: FromGood<T> {
+impl Good<Self> for bool {
+    fn good(self) -> Result<Self, Self> {
+        if self {
+            Ok(self)
+        } else {
+            Err(self)
+        }
+    }
+}
+
+impl<T, U> IntoGood<U> for T
+where
+    U: FromGood<T>,
+{
     fn into_good(self) -> U {
         U::from_good(self)
     }

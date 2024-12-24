@@ -59,6 +59,16 @@ impl<T> Bad<()> for Option<T> {
     }
 }
 
+impl Bad<Self> for bool {
+    fn bad(self) -> Result<Self, Self> {
+        if self {
+            Ok(self)
+        } else {
+            Err(self)
+        }
+    }
+}
+
 impl<T> FromBad<()> for Option<T> {
     #[inline]
     fn from_bad(_: ()) -> Self {
@@ -66,7 +76,10 @@ impl<T> FromBad<()> for Option<T> {
     }
 }
 
-impl<T, U> IntoBad<U> for T where U: FromBad<T> {
+impl<T, U> IntoBad<U> for T
+where
+    U: FromBad<T>,
+{
     fn into_bad(self) -> U {
         U::from_bad(self)
     }

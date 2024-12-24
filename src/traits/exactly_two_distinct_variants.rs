@@ -5,6 +5,9 @@ use core::ops::ControlFlow;
 /// All enums that derive [`Good`] and [`Bad`] with exactly one good and one
 /// bad variant implement this trait automatically
 ///
+/// [`Good`]: crate::traits::Good
+/// [`Bad`]: crate::traits::Bad
+///
 /// This trait is intentionally marked as unsafe for public API.
 ///
 /// # Safety
@@ -13,6 +16,8 @@ use core::ops::ControlFlow;
 /// any explicit implementation of this trait makes the `TwoStates` trait fallible!
 /// Implementors of this trait should always implement the [`TwoStates`] trait
 /// to properly handle neutral/duplicate good or bad variants.
+///
+/// [`TwoStates`]: crate::TwoStates
 #[allow(dead_code)]
 pub unsafe trait ExactlyTwoDistinctVariants {}
 
@@ -30,3 +35,5 @@ unsafe impl<'a, T> ExactlyTwoDistinctVariants for &'a mut Option<T> {}
 unsafe impl<B, C> ExactlyTwoDistinctVariants for ControlFlow<B, C> {}
 unsafe impl<'a, B, C> ExactlyTwoDistinctVariants for &'a ControlFlow<B, C> {}
 unsafe impl<'a, B, C> ExactlyTwoDistinctVariants for &'a mut ControlFlow<B, C> {}
+
+unsafe impl ExactlyTwoDistinctVariants for bool {}

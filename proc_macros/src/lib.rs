@@ -16,6 +16,116 @@ use syn::{parse_macro_input, Data, DeriveInput, Error, Fields, Generics, Token, 
 use helper_fn::*;
 use syn::punctuated::Punctuated;
 
+/// Derive macro for enums and easy propagation.
+///
+/// # Overview
+/// Derive `Propagate` with `#[good]` and `#[bad]` attributes to implement `Good` and `Bad` traits,
+/// which makes the enum compatible with the `good!` and `bad!` macros for easy error propagation.
+/// ### Example
+/// ```rust ignore
+/// use propagate::{Propagate, good};
+/// #[derive(Propagate)]
+/// enum LogMessage {
+///     #[good]
+///     Success(String),
+///     Info(String),
+///     Debug(String),
+///     Warning(String),
+///     #[bad]
+///     Error(String),
+/// }
+///
+/// fn print_success(msg: &LogMessage) {
+///     let msg: &str = good!(msg;);
+///     println!("{msg}");
+/// }
+///
+/// fn print_error(msg: &LogMessage) {
+///     let msg: &str = bad!(msg;);
+///     println!("{msg}");
+/// }
+/// ```
+///
+/// # Type overloading
+/// You can have multiple `#[good]` or `#[bad]` attributes for multiple variants with the
+/// same type.
+/// - Note: Deriving `Propagate` also implements `FromGood` and `FromBad`, **overloaded types
+/// loses this trait**
+/// ```rust ignore
+/// use propagate::{Propagate, FromBad, bad};
+/// #[derive(Propagate)]
+/// enum Size {
+///     #[bad]
+///     TooSmall(u32),
+///     Small(u32),
+///     Medium(u32),
+///     Large(u32),
+///     #[bad]
+///     TooLarge(u32),
+/// }
+///
+/// fn handle_out_of_bounds(size: Size) {
+///     let count: u32 = bad!(size;);
+///     // let size: Size = Size::from_bad(count);
+///     // Error: `FromBad<u32>` is not implemented for `Size`
+///     // because there are more than one variants with type `u32` are `#[bad]`
+/// }
+/// ```
+///
+/// # Variant overloading
+/// You can have multiple `#[good]` or `#[bad]` attributes for multiple variants, each type
+/// implements `FromGood` and/or `FromBad` if they are marked exactly once.
+/// ```rust ignore
+/// use propagate::Propagate;
+/// #[derive(Propagate)]
+/// enum Message {
+///     #[good]
+///     SuccessMsg(String),
+///     #[good]
+///     SuccessCode(u32),
+///     #[good]
+///     SuccessPercentage(f64),
+///     InfoMsg(String),
+/// }
+///
+/// impl Message {
+///     fn print_success_msg(&self) {
+///         let msg: &str = good!(self;);
+///         println!("{msg}");
+///     }
+///     fn print_success_code(&self) {
+///         let code: u32 = good!(self;);
+///         println!("{code}");
+///     }
+///     fn print_success_percentage(&self) {
+///         let percentage: f64 = good!(self;);
+///         println!("{percentage}");
+///     }
+/// }
+/// ```
+///
+/// # Two-state enums
+/// If an enum has **exactly** one `#[good]` and one `#[bad]` variant, with **no other variants**,
+/// it implements `TwoStates` automatically. This can be helpful for propagating inner values for
+/// good/bad variants.
+///
+/// ```rust ignore
+/// use propagate::Propagate;
+/// type Port = u8;
+/// #[derive(Propagate)]
+/// enum Switch {
+///     #[good]
+///     High(Port),
+///     #[bad]
+///     Low(Port),
+/// }
+/// fn activate_port(switch: Switch) -> Port {
+///     // Two-state enums enable the fat arrow syntax for propagating inner values
+///     let port = good!(switch => _);
+///     // Activating port...
+///     port
+/// }
+/// ```
 #[proc_macro_derive(Propagate, attributes(good, bad))]
 pub fn derive_propagate(input: TokenStream) -> TokenStream {
     let trait_path = quote! {::propagate::};
