@@ -94,11 +94,11 @@ use syn::punctuated::Punctuated;
 ///         println!("{msg}");
 ///     }
 ///     fn print_success_code(&self) {
-///         let code: u32 = good!(self;);
+///         let code: u32 = *good!(self;);
 ///         println!("{code}");
 ///     }
 ///     fn print_success_percentage(&self) {
-///         let percentage: f64 = good!(self;);
+///         let percentage: f64 = *good!(self;);
 ///         println!("{percentage}");
 ///     }
 /// }
