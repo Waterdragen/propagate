@@ -16,7 +16,7 @@ use syn::{parse_macro_input, Data, DeriveInput, Error, Fields, Generics, Token, 
 use helper_fn::*;
 use syn::punctuated::Punctuated;
 
-/// Derive macro for enums and easy propagation.
+/// Derive macro for enums and easy enum propagation.
 ///
 /// # Overview
 /// Derive `Propagate` with `#[good]` and `#[bad]` attributes to implement `Good` and `Bad` traits,
