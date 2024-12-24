@@ -2,6 +2,8 @@
 macro_rules! _must_unwrap {
     ($mac_call:expr) => {{
         use core::ops::ControlFlow::{self, Break, Continue};
+        use panic as unwinding_panic;
+        use panic as abort;
         use std::sync::OnceLock;
         let control: OnceLock<ControlFlow<()>> = OnceLock::new();
         let value: OnceLock<_> = OnceLock::new();
@@ -14,19 +16,19 @@ macro_rules! _must_unwrap {
                     counter += 1;
                     if counter > 1 {
                         let _ = control.set(Continue(()));
-                        panic!();
+                        unwinding_panic!("catch me");
                     }
                     let _ = value.set($mac_call);
-                    return panic!();
+                    return unwinding_panic!("catch me");
                 };
                 let _ = control.set(Break(()));
-                panic!();
+                unwinding_panic!("catch me");
             })();
         });
         assert!(res.is_err(), "Macro reached return statement");
         match control.into_inner() {
-            Some(Continue(_)) => panic!("Macro reached continue statement"),
-            Some(Break(_)) => panic!("Macro reached break statement"),
+            Some(Continue(_)) => abort!("Macro reached continue statement"),
+            Some(Break(_)) => abort!("Macro reached break statement"),
             None => {}
         }
         value.into_inner()

@@ -63,9 +63,9 @@ fn good_value_or_return_default_value() {
     assert_short_circuit_eq!(good!(res; return), ());
 
     let control: ControlFlow<&str, i32> = Continue(3);
-    assert_unwrap_eq!(good!(control; "default value"), 3);
+    assert_unwrap_eq!(good!(control; "default return"), 3);
     let control: ControlFlow<&str, i32> = Break("break");
-    assert_short_circuit_eq!(good!(control; "default value"), "default value");
+    assert_short_circuit_eq!(good!(control; "default return"), "default return");
 }
 
 #[test]
